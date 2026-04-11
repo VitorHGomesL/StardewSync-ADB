@@ -2,7 +2,7 @@
 *.exe
 *.dll
 *.conf
-NOTICE
+NOTICE.txt
 source.properties
 etc1tool*
 hprof-conv*
