@@ -1,0 +1,17 @@
+# Ignorar executáveis e bibliotecas do Android Platform-Tools
+*.exe
+*.dll
+*.conf
+NOTICE
+source.properties
+etc1tool*
+hprof-conv*
+make_f2fs*
+mke2fs*
+sqlite3*
+
+# Ignorar pastas de teste e saves pessoais
+SAVES_TESTS/
+
+# Ignorar arquivos temporários do Python
+__pycache__/
