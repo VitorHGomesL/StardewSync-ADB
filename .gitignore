@@ -10,8 +10,10 @@ make_f2fs*
 mke2fs*
 sqlite3*
 
-# Ignorar pastas de teste e saves pessoais
+# Ignorar pastas de desenvolvimento
 SAVES_TESTS/
+.venv/
+.env
 
 # Ignorar arquivos temporários do Python
 __pycache__/

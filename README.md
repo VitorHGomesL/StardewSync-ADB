@@ -1,63 +1,269 @@
-# StardewSync-ADB 🚜📱
+# StardewSync-ADB 🌱📱
 
-**StardewSync-ADB** é uma ferramenta de automação desenvolvida em Python para sincronizar saves do jogo *Stardew Valley* entre o PC (Windows) e dispositivos Android. Utilizando o protocolo ADB (Android Debug Bridge), o projeto elimina a fricção da transferência manual e resolve limitações comuns de sistemas de arquivos.
+**StardewSync-ADB** é uma ferramenta em Python para auxiliar a sincronização de saves do *Stardew Valley* entre o computador e um dispositivo Android usando **ADB**.
 
----
-
-## 📋 1. O Problema
-
-Jogadores de Stardew Valley que utilizam as plataformas PC e Android frequentemente enfrentam dificuldades para manter o progresso sincronizado:
-- **Transferência Manual Ineficiente:** Depender do Windows Explorer e do protocolo MTP (Media Transfer Protocol) é lento e instável.
-- **Risco de Perda de Dados:** É fácil sobrescrever um save mais novo por um antigo acidentalmente.
-- **Limitações de Hardware:** Versões recentes do Android (14+) impõem restrições de acesso a pastas `/Android/data`, dificultando a cópia direta de arquivos via interface visual do Windows.
+> Status atual: a **CLI está funcionando** com painel visual em tempo real, detecção de caminhos, detecção do Android via ADB e mudança visual de status. A **sincronização automática ainda não foi reativada** nesta versão.
 
 ---
 
-## ⚙️ 2. Descrições Técnicas
+## Status da versão atual
 
-O projeto foi construído utilizando as seguintes tecnologias e conceitos de **Análise e Desenvolvimento de Sistemas (ADS)**:
+Esta versão está focada na base da CLI e na preparação do fluxo de configuração.
 
-* **Linguagem:** Python 3.10+
-* **Comunicação Android:** Protocolo **ADB (Android Debug Bridge)** via comandos shell para bypass de restrições de interface.
-* **Gerenciamento de Arquivos:** Bibliotecas `pathlib` (para manipulação de caminhos dinâmicos) e `shutil` (para operações de I/O de alto nível).
-* **Deep Scan (Varredura em Profundidade):** Implementação de busca recursiva via `rglob` para detectar alterações em subdiretórios, contornando a falha do Windows que não atualiza o timestamp da pasta raiz.
-* **Watchdog Pattern:** Algoritmo de monitoramento contínuo (polling) que observa o estado do sistema e reage a eventos de salvamento em tempo real.
+### Funcionando
 
----
+- CLI com comandos via **Typer**.
+- Interface visual com **Rich**.
+- Painel fixo no terminal usando `Live`.
+- Status do Android mudando visualmente:
+  - vermelho quando desconectado;
+  - verde quando conectado.
+- Leitura de caminhos salvos em `caminhos.json`.
+- Configuração de caminho do save do PC e pasta de backup.
+- Detecção do ADB instalado no sistema via `shutil.which("adb")`.
+- Fallback para ADB local dentro da pasta `platform-tools/`.
+- Detecção do diretório de saves do Android via ADB.
 
-## 🚀 3. Como o Programa Resolve o Problema
+### Ainda não reativado
 
-O **StardewSync-ADB** atua como uma ponte inteligente (bridge) entre os dispositivos:
+- Sincronização automática PC ↔ Android.
+- Watchdog de alterações de save.
+- Push automático do PC para o Android.
+- Pull automático do Android para o PC durante o fluxo principal.
+- Backup automático antes da sincronização.
 
-1.  **Detecção Ativa:** O script monitora a conexão USB. Assim que o celular é reconhecido via ADB, ele inicia a rotina.
-2.  **Sincronia Inteligente:** No início, o programa compara os timestamps (data/hora) do save no PC e no Celular. Ele move automaticamente a versão mais recente para o dispositivo que estiver desatualizado.
-3.  **Monitoramento em Tempo Real:** Enquanto o usuário joga no PC, o script vigia qualquer novo salvamento. Ao salvar o jogo (dormir no jogo), o script detecta a alteração, gera um backup de segurança local e faz o *push* imediato para o Android.
-4.  **Segurança (Fail-safe):** Antes de qualquer transferência, uma cópia de segurança é criada na pasta `SAVES_TESTS`, garantindo que o usuário nunca perca seu progresso em caso de falha física (cabo desconectado).
-
----
-
-## 🤖 4. Relatório de Uso de IA (AI-Assisted Development)
-
-> **Nota:** Este relatório foi gerado pela IA (Gemini 3 Flash) para descrever o processo de colaboração.
-
-Este projeto foi desenvolvido em um modelo de **Pair Programming** entre o desenvolvedor e a IA. A colaboração ocorreu da seguinte forma:
-
--   **Arquitetura e Lógica:** A IA atuou como mentora, sugerindo a transição do protocolo instável MTP para o ADB, aumentando a confiabilidade do sistema.
--   **Debugging de Hardware:** Auxílio na identificação de bloqueios de segurança específicos (como o *Samsung Auto Blocker* e restrições da *One UI 6*).
--   **Refatoração Profissional:** A IA auxiliou na transformação de comentários básicos em documentações técnicas (`Docstrings`), elevando o nível do código para padrões de mercado.
--   **Teste de Mesa:** Simulações lógicas realizadas pela IA para prever erros de execução antes mesmo do código rodar fisicamente (como o tratamento de parênteses em chamadas de funções).
+As funções relacionadas à sincronização ainda existem no código, mas o fluxo principal da CLI está temporariamente focado na interface e nas detecções.
 
 ---
 
-## 🛠️ 5. Como Configurar
+## Objetivo do projeto
 
-Para utilizar este projeto, você precisará de:
+O projeto busca reduzir o trabalho manual de copiar saves do *Stardew Valley* entre PC e Android.
 
-1.  **ADB Instalado:** Baixe o [Platform-Tools do Google](https://developer.android.com/tools/releases/platform-tools).
-2.  **Depuração USB Ativada:** No seu Android, ative as Opções do Desenvolvedor e ligue a "Depuração USB".
-3.  **Samsung Auto Blocker (Opcional):** Se usar Samsung com Android 14, desative o "Bloqueador Automático" em Segurança e Privacidade.
+A ideia final é:
 
-**Execução:**
-Salve o script `main.py` na mesma pasta do `adb.exe` e execute:
+1. detectar o Android conectado;
+2. identificar onde estão os saves do PC;
+3. identificar onde estão os saves do Android;
+4. comparar qual lado possui o save mais recente;
+5. criar backup de segurança;
+6. sincronizar a versão correta entre os dispositivos.
+
+No momento, a versão atual cobre principalmente as etapas de **CLI, configuração e detecção**.
+
+---
+
+## Tecnologias usadas
+
+- **Python 3**
+- **Typer** para comandos de terminal
+- **Rich** para interface visual no terminal
+- **ADB** para comunicação com o Android
+- **pathlib** para manipulação de caminhos
+- **JSON** para persistência simples de configuração
+
+---
+
+## Requisitos
+
+### Python
+
+Recomenda-se usar um ambiente virtual:
+
 ```bash
-python main.py
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Instale as dependências usadas pelo projeto:
+
+```bash
+pip install typer rich
+```
+
+### ADB no Linux
+
+No Linux Mint/Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install adb
+```
+
+Teste se o ADB foi instalado:
+
+```bash
+adb version
+```
+
+Teste se o Android foi reconhecido:
+
+```bash
+adb devices
+```
+
+No celular, ative:
+
+```txt
+Opções de desenvolvedor → Depuração USB
+```
+
+Ao conectar o cabo USB, aceite a permissão RSA no celular.
+
+---
+
+## Configuração
+
+Antes de iniciar o painel, configure os caminhos:
+
+```bash
+python3 main.py config
+```
+
+Esse comando salva os caminhos em:
+
+```txt
+caminhos.json
+```
+
+O arquivo guarda:
+
+```json
+{
+    "caminho_pc": "/caminho/para/saves/do/pc",
+    "caminho_backup": "/caminho/para/backups"
+}
+```
+
+---
+
+## Uso da CLI
+
+Ver ajuda:
+
+```bash
+python3 main.py --help
+```
+
+Configurar caminhos:
+
+```bash
+python3 main.py config
+```
+
+Iniciar painel da CLI:
+
+```bash
+python3 main.py iniciar
+```
+
+Ver caminhos configurados:
+
+```bash
+python3 main.py caminhos
+```
+
+Ver versão:
+
+```bash
+python3 main.py versao
+```
+
+---
+
+## Comportamento atual da CLI
+
+Ao executar:
+
+```bash
+python3 main.py iniciar
+```
+
+A aplicação abre um painel no terminal com:
+
+- logo do StardewSyncADB;
+- sistema atual ↔ Android;
+- status do Android;
+- status do diretório do PC;
+- status da pasta de backup.
+
+O status do Android muda automaticamente conforme a conexão:
+
+```txt
+Android: DESCONECTADO  → vermelho
+Android: CONECTADO     → verde
+```
+
+A CLI não deve ficar imprimindo mensagens repetidas no terminal. O objetivo atual é manter uma tela fixa e atualizar apenas os estados visuais.
+
+---
+
+## Estrutura atual
+
+```txt
+StardewSync-ADB/
+├── main.py
+├── caminhos.json
+├── src/
+│   ├── __init__.py
+│   ├── adb.py
+│   ├── cli.py
+│   ├── config.py
+│   └── watchdog.py
+└── README.md
+```
+
+Resumo dos arquivos principais:
+
+```txt
+main.py        → entrada da aplicação e comandos Typer
+src/cli.py     → painel visual com Rich
+src/config.py  → configuração, caminhos, JSON e backup
+src/adb.py     → localização do ADB e comandos ADB
+src/watchdog.py → monitoramento de alterações, ainda não reintegrado ao fluxo principal
+```
+
+---
+
+## Observações importantes
+
+A versão atual ainda está em desenvolvimento.
+
+O foco neste momento é estabilizar:
+
+1. CLI;
+2. configuração;
+3. detecção de ADB;
+4. detecção de Android;
+5. exibição correta de status.
+
+A sincronização real será reativada depois que essa base estiver estável.
+
+---
+
+## Próximos passos
+
+- Remover efeitos colaterais nos imports.
+- Garantir que `--help` funcione mesmo sem configuração inicial.
+- Melhorar tratamento quando `caminhos.json` não existir.
+- Integrar mensagens de estado no painel Rich.
+- Reativar `sincronia_inicial()` com segurança.
+- Reativar backup antes de qualquer transferência.
+- Reativar watchdog para detectar saves no PC.
+- Substituir comandos ADB antigos por funções centralizadas em `src/adb.py`.
+
+---
+
+## Aviso sobre sincronização
+
+Esta versão **não deve ser considerada pronta para sincronizar saves reais automaticamente**.
+
+Use por enquanto para testar:
+
+- CLI;
+- configuração;
+- reconhecimento de caminhos;
+- detecção do Android;
+- visualização do painel.
+
+Antes de reativar a sincronização, é recomendado testar com uma pasta fake de saves e manter backup manual dos arquivos reais.

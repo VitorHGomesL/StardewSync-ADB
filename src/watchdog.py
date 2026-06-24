@@ -1,27 +1,12 @@
 import os
 import time
 import subprocess
+import typer
 from datetime import datetime
-from src.config import CAMINHO_CELULAR, CAMINHO_PC, CAMINHO_BACKUP, tempo_celular, tempo_pc, realizar_backup
-from src.connections import celular_conectado
-
-def sincronia_inicial():
-    """
-    Rotina executada na primeira detecção de conexão validada.
-    Compara as versões do save e atualiza o estado local (PC) caso 
-    o usuário tenha jogado no dispositivo móvel recentemente.
-    """
-    print("Sincronizando save do Celular para o PC...")
-
-    if celular_conectado():
-        horario_celular = tempo_celular()
-        horario_pc = tempo_pc()
-        
-        # Puxa os dados (pull) se o Android tiver a versão mais nova
-        if horario_celular > horario_pc:    
-            os.system(f'adb pull "{CAMINHO_CELULAR}/." "{CAMINHO_PC}"')
-            print("Pc atualizado com o save do celular")
+from src.config import CAMINHO_CELULAR, json_read, tempo_pc, realizar_backup
+from src.adb import celular_conectado, tempo_celular
    
+CAMINHO_PC, CAMINHO_BACKUP = json_read()
 
 def vigiar_alteracoes():
     """
@@ -29,7 +14,7 @@ def vigiar_alteracoes():
     Ao detectar um novo salvamento (evento de alteração de arquivo), aciona
     a criação do backup de segurança e atualiza o Android automaticamente (Push).
     """
-    print("Monitorando jogo... Não desconecte o celular.")
+    typer.echo("Monitorando jogo... Não desconecte o celular.")
     
     # Define a referência temporal inicial (Snapshot base)
     horario_visto = tempo_pc()
@@ -38,7 +23,7 @@ def vigiar_alteracoes():
         try:
             # Validação contínua da conexão física para evitar travamentos silenciosos
             if not celular_conectado():
-                print("Conexão com o celular perdida!")
+                typer.echo("Conexão com o celular perdida!")
                 break
 
             # Snapshot temporal do ciclo atual
@@ -46,7 +31,7 @@ def vigiar_alteracoes():
             
             # Condição de gatilho: Alteração detectada no diretório
             if tempo_atual > horario_visto:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] Save detectado! Sincronizando...")
+                typer.echo(f"[{datetime.now().strftime('%H:%M:%S')}] Save detectado! Sincronizando...")
                 
                 realizar_backup(CAMINHO_PC)
                 os.system(f'adb push "{CAMINHO_PC}/." "{CAMINHO_CELULAR}"')
@@ -59,5 +44,5 @@ def vigiar_alteracoes():
             
         except Exception as e:
             # Captura erros não previstos e quebra o loop com segurança
-            print(f"Erro na vigília (celular desplugado?): {e}")
+            typer.echo(f"Erro na vigília (celular desplugado?): {e}")
             break
