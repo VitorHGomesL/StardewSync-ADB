@@ -38,17 +38,34 @@ def adb_shell(*args: str) -> subprocess.CompletedProcess:
     return adb_run("shell", *args)
 
 
+def diagnosticar_android() -> tuple[bool, str]:
+    try:
+        encontrar_adb()
+    except FileNotFoundError:
+        return False, "ADB não encontrado"
+
+    try:
+        resultado = adb_run("devices")
+        linhas = [linha.strip() for linha in resultado.stdout.splitlines()[1:] if linha.strip()]
+
+        if not linhas:
+            return False, "Nenhum dispositivo ADB conectado"
+    except subprocess.CalledProcessError:
+        return False, "Falha ao listar dispositivos ADB"
+
+    try:
+        adb_shell("ls", CAMINHO_CELULAR)
+        return True, "Android conectado e caminho disponível"
+    except subprocess.CalledProcessError:
+        return False, f"Pasta Android não encontrada: {CAMINHO_CELULAR}"
+
+
 def adb_pull(origem_android: str, destino_pc: Path) -> subprocess.CompletedProcess:
     return adb_run("pull", f"{origem_android}/.", str(destino_pc))
 
 def celular_conectado() -> bool:
-    try:
-        adb_shell("ls", CAMINHO_CELULAR)
-        return True
-    except FileNotFoundError:
-        return False
-    except subprocess.CalledProcessError:
-        return False
+    conectado, _ = diagnosticar_android()
+    return conectado
 
 
 def tempo_celular() -> float:
