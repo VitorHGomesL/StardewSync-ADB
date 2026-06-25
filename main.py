@@ -1,11 +1,10 @@
 import time
-
 import typer
 from src.config import json_read, configurar_caminhos
-from src.watchdog import vigiar_alteracoes
-from src.adb import sincronia_inicial, celular_conectado
-from src.cli import show_banner, status_atual
+from src.adb import celular_conectado
+from src.ui import show_banner, status_atual
 from rich.live import Live
+
 app = typer.Typer()
 
 CAMINHO_PC, CAMINHO_BACKUP = json_read()
