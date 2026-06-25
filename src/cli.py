@@ -2,7 +2,6 @@ from rich.console import Console, Group
 from rich.panel import Panel
 from rich.align import Align
 from rich.text import Text
-from src.config import json_read
 from src.adb import celular_conectado
 import platform
 from pathlib import Path
