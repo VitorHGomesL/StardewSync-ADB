@@ -16,4 +16,4 @@ SAVES_TESTS/
 .env
 
 # Ignorar arquivos temporários do Python
-__pycache__/
+__pycache__/caminhos.json
