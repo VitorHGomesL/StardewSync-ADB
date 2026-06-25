@@ -1,9 +1,9 @@
 import os
 import time
-import subprocess
 import typer
 from datetime import datetime
-from src.config import CAMINHO_CELULAR, json_read, tempo_pc, realizar_backup
+from src.config import CAMINHO_CELULAR, json_read
+from src.backup import tempo_pc, realizar_backup
 from src.adb import celular_conectado, tempo_celular
    
 CAMINHO_PC, CAMINHO_BACKUP = json_read()
@@ -14,10 +14,13 @@ def vigiar_alteracoes():
     Ao detectar um novo salvamento (evento de alteração de arquivo), aciona
     a criação do backup de segurança e atualiza o Android automaticamente (Push).
     """
+    if CAMINHO_PC is None or CAMINHO_BACKUP is None:
+        return
+    
     typer.echo("Monitorando jogo... Não desconecte o celular.")
     
     # Define a referência temporal inicial (Snapshot base)
-    horario_visto = tempo_pc()
+    horario_visto = tempo_pc(CAMINHO_PC)
     
     while True:
         try:
@@ -27,7 +30,7 @@ def vigiar_alteracoes():
                 break
 
             # Snapshot temporal do ciclo atual
-            tempo_atual = tempo_pc()
+            tempo_atual = tempo_pc(CAMINHO_CELULAR, CAMINHO_BACKUP, CAMINHO_PC)
             
             # Condição de gatilho: Alteração detectada no diretório
             if tempo_atual > horario_visto:
