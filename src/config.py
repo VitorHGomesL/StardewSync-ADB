@@ -27,53 +27,108 @@ def json_read() -> tuple[Path, Path]:
     Lê os caminhos de salvamento do PC e do backup a partir de um arquivo JSON.
     Retorna uma tupla contendo os caminhos absolutos.
     """
+    """
+    Lê os caminhos do arquivo JSON.
+    Se não existir ou estiver vazio, retorna None.
+    """
     if not CONFIG_FILE.exists():
-        raise FileNotFoundError(f"Arquivo de configuração não encontrado: {CONFIG_FILE}")
+        return None, None
+
     try:
-        with CONFIG_FILE.open("r", encoding ="utf-8") as file:
+        with CONFIG_FILE.open("r", encoding="utf-8") as file:
             data = json.load(file)
 
-        return Path(data["caminho_pc"]), Path(data["caminho_backup"])
+        caminho_pc_raw = data.get("caminho_pc", "").strip()
+        caminho_backup_raw = data.get("caminho_backup", "").strip()
+
+        caminho_pc = Path(caminho_pc_raw).expanduser().resolve() if caminho_pc_raw else None
+        caminho_backup = Path(caminho_backup_raw).expanduser().resolve() if caminho_backup_raw else None
+
+        return caminho_pc, caminho_backup
+
     except json.JSONDecodeError:
-        raise ValueError(f"Erro ao ler o arquivo de configuração")
-    
-    except KeyError as e:
-        raise KeyError(f"Chave ausente no arquivo de configuração: {e}")
+        return None, None
 
         
-def configurar_caminhos() -> tuple[Path, Path]:
+def configurar_caminhos():
     """
     Configura os caminhos de salvamento do PC e do backup.
-    Retorna uma tupla contendo os caminhos absolutos.
     """
+    typer.echo("\n---- Bem vindo ao Menu de Configuração do StardewSyncADB! ----\n")
     sistema = platform.system()
 
+    # Seleção automática baseada no sistema operacional
     if sistema == "Windows":
-        caminho_final = Path(os.path.expandvars(r"%AppData%/StardewValley/Saves"))
+        caminho_saves = Path(os.path.expandvars(r"%AppData%/StardewValley/Saves"))
 
     elif sistema == "Darwin":  # macOS
-        caminho_final = Path.home() / "Library/Application Support/StardewValley/Saves"
+        caminho_saves = Path.home() / "Library/Application Support/StardewValley/Saves"
 
     elif sistema == "Linux":
-        caminho_final = Path.home() / ".config/StardewValley/Saves"
+        caminho_saves = Path.home() / ".config/StardewValley/Saves"
 
-    if not caminho_final.is_dir():
-        raise FileNotFoundError(f"Caminho inválido: {caminho_final}")
-    if not caminho_final.exists():
-        return f"Caminho: '{caminho_final}' não encontrado"
-        caminho_manual = Path(input("Por favor, insira o diretório do jogo: ").strip()).expanduser().resolve()
-        if not caminho_manual.exists() or not caminho_manual.is_dir():
+    else:
+        raise OSError(f"Sistema operacional não suportado: {sistema}")
+
+    # Fim da seleção automática baseada no sistema operacional
+
+    if not caminho_saves.exists():
+        caminho_manual = Path(
+            input(
+                f"Caminho Padrão '{caminho_saves}' não encontrado, por favor, insira o caminho manualmente:\n"
+            ).strip()
+        ).expanduser().resolve()
+
+        if not caminho_manual.exists():
             raise FileNotFoundError(f"Caminho inválido: {caminho_manual}")
+
         if not caminho_manual.is_dir():
             raise NotADirectoryError(f"Caminho não é um diretório: {caminho_manual}")
-        caminho_final = caminho_manual
 
-    caminho_backup = Path(input("Por favor, insira o caminho de backup: ").strip()).expanduser().resolve()
+        caminho_saves = caminho_manual
 
+    else:
+        typer.echo(
+            f"\nDetectado o uso do sistema operacional {sistema}, "
+            f"usado o caminho {caminho_saves} como Diretório padrão do jogo.\n"
+        )
 
-    json_write(caminho_final, caminho_backup)
+        aprovacao = input("Deseja prosseguir com o diretório acima? S/n: ").strip().lower()
 
-    return f"Caminho do PC selecionado: {caminho_final} | Caminho de Backup selecionado: {caminho_backup}"
+        if aprovacao == "n":
+            caminho_manual = Path(
+                input("Por favor, insira o diretório do jogo: ").strip()
+            ).expanduser().resolve()
+
+            if not caminho_manual.exists():
+                raise FileNotFoundError(f"Caminho inválido: {caminho_manual}")
+
+            if not caminho_manual.is_dir():
+                raise NotADirectoryError(f"Caminho não é um diretório: {caminho_manual}")
+
+            caminho_saves = caminho_manual
+
+        elif aprovacao not in ("", "s"):
+            raise ValueError("Insira uma opção válida")
+
+    caminho_backup = input('''
+Por favor, insira o caminho de backup:
+(Caso queira usar o caminho padrão, pressione enter e será criado uma pasta no diretório do programa em ./backups)
+''').strip()
+
+    if caminho_backup == "":
+        caminho_backup = Path("./backups").expanduser().resolve()
+    else:
+        caminho_backup = Path(caminho_backup).expanduser().resolve()
+
+    caminho_backup.mkdir(parents=True, exist_ok=True)
+
+    json_write(caminho_saves, caminho_backup)
+
+    typer.echo(
+        f"Caminho do PC selecionado: {caminho_saves} | "
+        f"Caminho de Backup selecionado: {caminho_backup}"
+    )
 
 def realizar_backup(origem_padrao, caminho_backup, caminho_pc):
     """
@@ -115,11 +170,9 @@ def tempo_pc(caminho_pc):
     if not caminho_pc.exists():
         typer.echo(f"Pasta de saves do PC não encontrada: {caminho_pc}")
         return 0
-    
-    # Define o timestamp da pasta raiz como ponto de partida
+
     tempo_mais_novo = caminho_pc.stat().st_mtime
     
-    # O rglob('*') varre todos os arquivos internos e subdiretórios
     for item in caminho_pc.rglob('*'):
         if item.stat().st_mtime > tempo_mais_novo:
             tempo_mais_novo = item.stat().st_mtime
