@@ -1,7 +1,7 @@
 import time
 import typer
 from src.config import json_read, configurar_caminhos
-from src.adb import celular_conectado
+from src.adb import celular_conectado, diagnosticar_android
 from src.ui import show_banner, status_atual
 from rich.live import Live
 from src.cli import TELA_GATO_PISCANDO
@@ -20,19 +20,38 @@ def iniciar():
     tela_indice = 0
 
     with Live(
-        show_banner(caminho_pc, caminho_backup, status_texto, tela=TELA_GATO_PISCANDO[tela_indice], android_conectado=False),
+        show_banner(
+            caminho_pc,
+            caminho_backup,
+            status_texto,
+            tela=TELA_GATO_PISCANDO[tela_indice],
+            android_conectado=False,
+            android_status_texto="Inicializando diagnóstico Android...",
+        ),
         refresh_per_second=4,
-        screen=True
+        screen=True,
     ) as live:
         while True:
-            conectado = celular_conectado()
+            conectado, mensagem_android = diagnosticar_android()
+
             tela_indice = (tela_indice + 1) % len(TELA_GATO_PISCANDO)
+
             if caminho_pc is None or caminho_backup is None:
                 status_texto = "Caminho do PC/Backup não configurado"
             else:
                 status_texto = status_atual(caminho_pc, caminho_backup)
-                
-            live.update(show_banner(caminho_pc, caminho_backup, status_texto, tela= TELA_GATO_PISCANDO[tela_indice], android_conectado=conectado))
+
+            live.update(
+                show_banner(
+                    caminho_pc,
+                    caminho_backup,
+                    status_texto,
+                    tela=TELA_GATO_PISCANDO[tela_indice],
+                    android_conectado=conectado,
+                    android_status_texto=mensagem_android,
+                )
+            )
+
             time.sleep(2)
 
 @app.command()

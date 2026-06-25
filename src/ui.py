@@ -6,6 +6,7 @@ from src.adb import celular_conectado
 import platform
 from pathlib import Path
 
+
 console = Console()
 sistema = platform.system()
 
@@ -28,7 +29,13 @@ def status_atual(caminho_pc, caminho_backup):
 
     return "Serviço em funcionamento!"
 
-def show_banner(caminho_pc, caminho_backup, status_texto, tela, android_conectado: bool):
+def show_banner(
+        caminho_pc,
+        caminho_backup,
+        status_texto,
+        tela, 
+        android_conectado: bool, 
+        android_status_texto="Inicializando diagnóstico Android..."):
     logo = Text()
     logo.append("STARDEW", style="bold #ffd43b")
     logo.append("SYNC", style="bold #7bd88f")
@@ -42,8 +49,8 @@ def show_banner(caminho_pc, caminho_backup, status_texto, tela, android_conectad
 
 
     android_status = Text(
-        "Android: CONECTADO" if android_conectado else "Android: DESCONECTADO",
-        style="bold green" if android_conectado else "bold red"
+    f"Android: {android_status_texto}",
+    style="bold green" if android_conectado else "bold red"
     )
 
     if caminho_pc is None:
