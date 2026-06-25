@@ -4,7 +4,7 @@ from src.config import json_read, configurar_caminhos
 from src.adb import celular_conectado
 from src.ui import show_banner, status_atual
 from rich.live import Live
-
+from src.cli import TELA_GATO_PISCANDO
 app = typer.Typer()
 
 CAMINHO_PC, CAMINHO_BACKUP = json_read()
@@ -17,21 +17,22 @@ def iniciar():
     caminho_pc, caminho_backup = json_read()
     # Prepara o ambiente estrutural. Ignora (exist_ok) se as pastas já existirem
     status_texto = "Inicializando..."
+    tela_indice = 0
 
     with Live(
-        show_banner(caminho_pc, caminho_backup, status_texto, android_conectado=False),
+        show_banner(caminho_pc, caminho_backup, status_texto, tela=TELA_GATO_PISCANDO[tela_indice], android_conectado=False),
         refresh_per_second=4,
         screen=True
     ) as live:
         while True:
             conectado = celular_conectado()
-
+            tela_indice = (tela_indice + 1) % len(TELA_GATO_PISCANDO)
             if caminho_pc is None or caminho_backup is None:
                 status_texto = "Caminho do PC/Backup não configurado"
             else:
                 status_texto = status_atual(caminho_pc, caminho_backup)
                 
-            live.update(show_banner(caminho_pc, caminho_backup, status_texto, android_conectado=conectado))
+            live.update(show_banner(caminho_pc, caminho_backup, status_texto, tela= TELA_GATO_PISCANDO[tela_indice], android_conectado=conectado))
             time.sleep(2)
 
 @app.command()

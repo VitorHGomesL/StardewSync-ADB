@@ -24,28 +24,22 @@ def encontrar_adb() -> Path:
         "ADB não encontrado. Instale o Android Platform Tools ou coloque a pasta platform-tools dentro do projeto."
     )
 
-
-def adb_shell(*args: str) -> subprocess.CompletedProcess:
+def adb_run(*args: str) -> subprocess.CompletedProcess:
     adb = encontrar_adb()
 
     return subprocess.run(
-        [str(adb), "shell", *args],
+        [str(adb), *args],
         capture_output=True,
         text=True,
         check=True,
     )
+
+def adb_shell(*args: str) -> subprocess.CompletedProcess:
+    return adb_run("shell", *args)
 
 
 def adb_pull(origem_android: str, destino_pc: Path) -> subprocess.CompletedProcess:
-    adb = encontrar_adb()
-
-    return subprocess.run(
-        [str(adb), "pull", f"{origem_android}/.", str(destino_pc)],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-
+    return adb_run("pull", f"{origem_android}/.", str(destino_pc))
 
 def celular_conectado() -> bool:
     try:
@@ -68,7 +62,7 @@ def tempo_celular() -> float:
 
 
 def sincronia_inicial(caminho_pc: Path) -> str:
-    from src.config import tempo_pc #noqa
+    from src.backup import tempo_pc #noqa
     if not celular_conectado():
         return "Android desconectado"
 

@@ -28,39 +28,14 @@ def status_atual(caminho_pc, caminho_backup):
 
     return "Serviço em funcionamento!"
 
-def show_banner(caminho_pc, caminho_backup, status_texto, android_conectado: bool):
+def show_banner(caminho_pc, caminho_backup, status_texto, tela, android_conectado: bool):
     logo = Text()
     logo.append("STARDEW", style="bold #ffd43b")
     logo.append("SYNC", style="bold #7bd88f")
     logo.append("ADB", style="bold #5ec8ff")
 
-    scene = Text.from_markup(
-        r"""
-[white]      ✦        .          ✦        .[/white]
-[#1e90ff]  ─────────────────────────────[/#1e90ff]
-[#7bdff2]        ☁        ☁        ☁[/#7bdff2]
+    scene = Text.from_markup(tela)
 
-[#2f9e44]       /\      /\        /\ [/#2f9e44]
-[#2b8a3e]      /  \____/  \______/  \ [/#2b8a3e]
-[#087f5b] ____/______________________\____[/#087f5b]
-
-[#8d6e63]  ║═║═║═║═║═║═║═║═║═║═║═║[/#8d6e63]
-
-[#b85c38]          ████████████[/#b85c38]
-[#d9480f]         ██████████████[/#d9480f]
-[#8d4925]        ██[/#8d4925][#c92a2a]██████████[/#c92a2a][#8d4925]██[/#8d4925]
-[#6b4f3f]        ██  []  __  ██[/#6b4f3f]
-[#6b4f3f]        ██      ||  ██[/#6b4f3f]
-[#6b4f3f]        ██████████████[/#6b4f3f]
-
-[#f08c00]             /\\_/\\ [/#f08c00]
-[#f08c00]            ( o.o )[/#f08c00]
-[#f08c00]             > ^ <[/#f08c00]
-
-[#2f9e44]      ♧     ♧      ♧      ♧[/#2f9e44]
-[#e67700]  ░░░░░░░░░░░░░░░░░░░░░░░░░[/#e67700]
-"""
-    )
 
     subtitle = Text("Bem vindo! ", style="bold white")
     sync = Text(f"{sistema}  ↔  Android", style="bold cyan")
