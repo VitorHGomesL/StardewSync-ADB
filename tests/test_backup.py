@@ -12,7 +12,8 @@ class TestBackup(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             missing = Path(tmpdir) / "missing"
 
-            self.assertEqual(tempo_pc(missing), 0)
+            with patch("src.backup.typer.echo"):
+                self.assertEqual(tempo_pc(missing), 0)
 
     def test_tempo_pc_returns_newest_nested_file_timestamp(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -46,3 +47,43 @@ class TestBackup(unittest.TestCase):
                 realizar_backup(saves, backup, saves)
 
             self.assertEqual((backup / "save").read_text(encoding="utf-8"), "pc")
+
+    def test_realizar_backup_pulls_android_when_android_is_newer(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            saves = tmpdir / "saves"
+            backup = tmpdir / "backup"
+            saves.mkdir()
+            backup.mkdir()
+            os.utime(backup, (100, 100))
+
+            with (
+                patch("src.adb.tempo_celular", return_value=300),
+                patch("src.backup.tempo_pc", return_value=200),
+                patch("src.backup.os.system") as system,
+            ):
+                realizar_backup(saves, backup, saves)
+
+            system.assert_called_once_with(
+                f'adb pull "/sdcard/Android/data/com.chucklefish.stardewvalley/files/Saves/." "{backup}"'
+            )
+
+    def test_realizar_backup_does_nothing_when_backup_is_newest(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            saves = tmpdir / "saves"
+            backup = tmpdir / "backup"
+            saves.mkdir()
+            backup.mkdir()
+            os.utime(backup, (300, 300))
+
+            with (
+                patch("src.adb.tempo_celular", return_value=100),
+                patch("src.backup.tempo_pc", return_value=200),
+                patch("src.backup.shutil.copytree") as copytree,
+                patch("src.backup.os.system") as system,
+            ):
+                realizar_backup(saves, backup, saves)
+
+            copytree.assert_not_called()
+            system.assert_not_called()

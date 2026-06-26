@@ -13,7 +13,7 @@ def realizar_backup(origem_padrao, caminho_backup, caminho_pc):
     antes de qualquer substituição (Fail-safe).
     """
     from src.adb import tempo_celular#noqa
-    origem = origem_padrao
+    origem = None
     horario_celular = tempo_celular()
     horario_pc = tempo_pc(caminho_pc)
     

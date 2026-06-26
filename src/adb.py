@@ -76,6 +76,8 @@ def tempo_celular() -> float:
         return 0
     except subprocess.CalledProcessError:
         return 0
+    except ValueError:
+        return 0
 
 
 def sincronia_inicial(caminho_pc: Path) -> str:

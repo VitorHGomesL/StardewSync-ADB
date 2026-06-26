@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from src.ui import caminho_configurado, status_atual
+from src.ui import caminho_configurado, show_banner, status_atual
 
 
 class TestUi(unittest.TestCase):
@@ -40,3 +40,23 @@ class TestUi(unittest.TestCase):
             caminho_backup.mkdir()
 
             self.assertEqual(status_atual(caminho_pc, caminho_backup), "Serviço em funcionamento!")
+
+    @patch("src.ui.celular_conectado")
+    def test_status_atual_does_not_check_android_when_paths_are_invalid(self, celular_conectado):
+        self.assertEqual(
+            status_atual(Path("/tmp/nao-existe"), Path("/tmp/tambem-nao-existe")),
+            "Caminho do PC/Backup não configurado. Use o comando configurar e reinicie.",
+        )
+        celular_conectado.assert_not_called()
+
+    def test_show_banner_returns_renderable_group_without_configured_paths(self):
+        banner = show_banner(
+            None,
+            None,
+            "Caminho do PC/Backup não configurado",
+            tela="",
+            android_conectado=False,
+            android_status_texto="ADB não encontrado",
+        )
+
+        self.assertEqual(len(banner.renderables), 2)
