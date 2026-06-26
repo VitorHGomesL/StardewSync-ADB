@@ -48,7 +48,30 @@ def diagnosticar_android() -> tuple[bool, str]:
         resultado = adb_run("devices")
         linhas = [linha.strip() for linha in resultado.stdout.splitlines()[1:] if linha.strip()]
 
-        if not linhas:
+        dispositivo_autorizado = False
+        dispositivo_nao_autorizado = False
+        dispositivo_offline = False
+
+        for linha in linhas:
+            partes = linha.split()
+            if len(partes) < 2:
+                continue
+
+            status = partes[1]
+            if status == "device":
+                dispositivo_autorizado = True
+            elif status == "unauthorized":
+                dispositivo_nao_autorizado = True
+            elif status == "offline":
+                dispositivo_offline = True
+
+        if not dispositivo_autorizado:
+            if dispositivo_nao_autorizado:
+                return False, "Dispositivo ADB não autorizado. Aceite a autorização RSA no celular"
+
+            if dispositivo_offline:
+                return False, "Dispositivo ADB offline. Reconecte o celular"
+
             return False, "Nenhum dispositivo ADB conectado"
     except subprocess.CalledProcessError:
         return False, "Falha ao listar dispositivos ADB"
@@ -63,6 +86,9 @@ def diagnosticar_android() -> tuple[bool, str]:
 def adb_pull(origem_android: str, destino_pc: Path) -> subprocess.CompletedProcess:
     return adb_run("pull", f"{origem_android}/.", str(destino_pc))
 
+def adb_push(origem_pc: Path, destino_android: str) -> subprocess.CompletedProcess:
+    return adb_run("push", f"{origem_pc}/.", destino_android)
+
 def celular_conectado() -> bool:
     conectado, _ = diagnosticar_android()
     return conectado
@@ -70,13 +96,33 @@ def celular_conectado() -> bool:
 
 def tempo_celular() -> float:
     try:
-        resultado = adb_shell("stat", "-c", "%Y", CAMINHO_CELULAR)
-        return float(resultado.stdout.strip())
+        resultado = adb_shell(
+            "find",
+            CAMINHO_CELULAR,
+            "-type",
+            "f",
+            "-exec",
+            "stat",
+            "-c",
+            "%Y",
+            "{}",
+            ";",
+        )
+        timestamps = []
+
+        for linha in resultado.stdout.splitlines():
+            try:
+                timestamps.append(float(linha.strip()))
+            except ValueError:
+                continue
+
+        if not timestamps:
+            return 0
+
+        return max(timestamps)
     except FileNotFoundError:
         return 0
     except subprocess.CalledProcessError:
-        return 0
-    except ValueError:
         return 0
 
 

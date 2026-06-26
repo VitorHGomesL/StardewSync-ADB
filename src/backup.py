@@ -32,8 +32,11 @@ def realizar_backup(origem_padrao, caminho_backup, caminho_pc):
     # Execução baseada na origem selecionada
     if origem == caminho_pc:
         shutil.copytree(caminho_pc, caminho_backup, dirs_exist_ok=True)
+        return True
     elif origem == CAMINHO_CELULAR:
-        os.system(f'adb pull "{CAMINHO_CELULAR}/." "{caminho_backup}"')
+        return os.system(f'adb pull "{CAMINHO_CELULAR}/." "{caminho_backup}"') == 0
+
+    return True
 
 def tempo_pc(caminho_pc):
     """

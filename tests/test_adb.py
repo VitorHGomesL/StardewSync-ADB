@@ -44,6 +44,44 @@ class TestAdb(unittest.TestCase):
 
     @patch("src.adb.adb_run")
     @patch("src.adb.encontrar_adb", return_value=Path("/usr/bin/adb"))
+    def test_diagnosticar_android_with_unauthorized_device(self, _encontrar_adb, adb_run):
+        adb_run.return_value = Mock(stdout="List of devices attached\nabc\tunauthorized\n")
+
+        self.assertEqual(
+            adb.diagnosticar_android(),
+            (False, "Dispositivo ADB não autorizado. Aceite a autorização RSA no celular"),
+        )
+
+    @patch("src.adb.adb_run")
+    @patch("src.adb.encontrar_adb", return_value=Path("/usr/bin/adb"))
+    def test_diagnosticar_android_with_offline_device(self, _encontrar_adb, adb_run):
+        adb_run.return_value = Mock(stdout="List of devices attached\nabc\toffline\n")
+
+        self.assertEqual(
+            adb.diagnosticar_android(),
+            (False, "Dispositivo ADB offline. Reconecte o celular"),
+        )
+
+    @patch("src.adb.adb_shell")
+    @patch("src.adb.adb_run")
+    @patch("src.adb.encontrar_adb", return_value=Path("/usr/bin/adb"))
+    def test_diagnosticar_android_ignores_non_device_lines(
+        self,
+        _encontrar_adb,
+        adb_run,
+        _adb_shell,
+    ):
+        adb_run.return_value = Mock(
+            stdout="List of devices attached\n* daemon started successfully *\nabc\tdevice\n"
+        )
+
+        self.assertEqual(
+            adb.diagnosticar_android(),
+            (True, "Android conectado e caminho disponível"),
+        )
+
+    @patch("src.adb.adb_run")
+    @patch("src.adb.encontrar_adb", return_value=Path("/usr/bin/adb"))
     def test_diagnosticar_android_when_devices_command_fails(self, _encontrar_adb, adb_run):
         adb_run.side_effect = subprocess.CalledProcessError(1, ["adb", "devices"])
 
@@ -86,6 +124,30 @@ class TestAdb(unittest.TestCase):
     @patch("src.adb.adb_shell", return_value=Mock(stdout="123\n"))
     def test_tempo_celular_returns_timestamp(self, _adb_shell):
         self.assertEqual(adb.tempo_celular(), 123)
+
+    @patch("src.adb.adb_shell", return_value=Mock(stdout="100\n300\n200\n"))
+    def test_tempo_celular_returns_newest_nested_file_timestamp(self, adb_shell):
+        self.assertEqual(adb.tempo_celular(), 300)
+        adb_shell.assert_called_once_with(
+            "find",
+            adb.CAMINHO_CELULAR,
+            "-type",
+            "f",
+            "-exec",
+            "stat",
+            "-c",
+            "%Y",
+            "{}",
+            ";",
+        )
+
+    @patch("src.adb.adb_shell", return_value=Mock(stdout=""))
+    def test_tempo_celular_returns_zero_when_find_returns_no_files(self, _adb_shell):
+        self.assertEqual(adb.tempo_celular(), 0)
+
+    @patch("src.adb.adb_shell", return_value=Mock(stdout="invalid\n250\noutro\n100\n"))
+    def test_tempo_celular_ignores_invalid_timestamp_lines(self, _adb_shell):
+        self.assertEqual(adb.tempo_celular(), 250)
 
     @patch("src.adb.adb_shell", return_value=Mock(stdout="not-a-timestamp\n"))
     def test_tempo_celular_returns_zero_on_invalid_timestamp(self, _adb_shell):

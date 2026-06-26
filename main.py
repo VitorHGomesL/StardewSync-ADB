@@ -2,6 +2,7 @@ import time
 import typer
 from src.config import json_read, configurar_caminhos
 from src.adb import celular_conectado, diagnosticar_android
+from src.sync import sincronizar_manual
 from src.ui import show_banner, status_atual
 from rich.live import Live
 from src.cli import TELA_GATO_PISCANDO
@@ -68,6 +69,14 @@ def config():
     Configura os caminhos do jogo e do backup
     """
     configurar_caminhos()
+
+@app.command()
+def sincronizar():
+    """
+    Sincroniza manualmente o save mais recente entre PC e Android.
+    """
+    caminho_pc, caminho_backup = json_read()
+    typer.echo(sincronizar_manual(caminho_pc, caminho_backup))
 
 if __name__ == "__main__":
     app()
