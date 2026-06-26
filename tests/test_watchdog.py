@@ -6,7 +6,6 @@ import src.watchdog as watchdog
 
 
 class TestWatchdog(unittest.TestCase):
-    @unittest.expectedFailure
     def test_vigiar_alteracoes_uses_current_function_signatures(self):
         with (
             patch.object(watchdog, "CAMINHO_PC", Path("/tmp/saves")),

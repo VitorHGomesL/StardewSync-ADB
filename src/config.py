@@ -21,7 +21,7 @@ def json_write(caminho_final: Path, caminho_backup: Path):
         json.dump(Data, file, indent=4, ensure_ascii=False)
 
 
-def json_read() -> tuple[Path, Path]:
+def json_read() -> tuple[Path | None, Path | None]:
     """
     Lê os caminhos de salvamento do PC e do backup a partir de um arquivo JSON.
     Retorna uma tupla contendo os caminhos absolutos.
@@ -37,8 +37,17 @@ def json_read() -> tuple[Path, Path]:
         with CONFIG_FILE.open("r", encoding="utf-8") as file:
             data = json.load(file)
 
-        caminho_pc_raw = data.get("caminho_pc", "").strip()
-        caminho_backup_raw = data.get("caminho_backup", "").strip()
+        caminho_pc_raw = data.get("caminho_pc", "")
+        caminho_backup_raw = data.get("caminho_backup", "")
+
+        if not isinstance(caminho_pc_raw, str):
+            caminho_pc_raw = ""
+
+        if not isinstance(caminho_backup_raw, str):
+            caminho_backup_raw = ""
+
+        caminho_pc_raw = caminho_pc_raw.strip()
+        caminho_backup_raw = caminho_backup_raw.strip()
 
         caminho_pc = Path(caminho_pc_raw).expanduser().resolve() if caminho_pc_raw else None
         caminho_backup = Path(caminho_backup_raw).expanduser().resolve() if caminho_backup_raw else None

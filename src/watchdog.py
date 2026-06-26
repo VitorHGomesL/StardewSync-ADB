@@ -30,13 +30,13 @@ def vigiar_alteracoes():
                 break
 
             # Snapshot temporal do ciclo atual
-            tempo_atual = tempo_pc(CAMINHO_CELULAR, CAMINHO_BACKUP, CAMINHO_PC)
+            tempo_atual = tempo_pc(CAMINHO_PC)
             
             # Condição de gatilho: Alteração detectada no diretório
             if tempo_atual > horario_visto:
                 typer.echo(f"[{datetime.now().strftime('%H:%M:%S')}] Save detectado! Sincronizando...")
                 
-                realizar_backup(CAMINHO_PC)
+                realizar_backup(CAMINHO_PC, CAMINHO_BACKUP, CAMINHO_PC)
                 os.system(f'adb push "{CAMINHO_PC}/." "{CAMINHO_CELULAR}"')
                 
                 # Atualiza a referência temporal para aguardar o próximo save

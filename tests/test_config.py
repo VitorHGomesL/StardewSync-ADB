@@ -48,7 +48,6 @@ class TestConfigJson(unittest.TestCase):
             with patch.object(config, "CONFIG_FILE", config_file):
                 self.assertEqual(config.json_read(), (None, None))
 
-    @unittest.expectedFailure
     def test_json_read_non_string_values_returns_none(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "caminhos.json"
