@@ -17,3 +17,4 @@ SAVES_TESTS/
 
 # Ignorar arquivos temporários do Python
 __pycache__/
+caminhos.json

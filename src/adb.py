@@ -24,43 +24,102 @@ def encontrar_adb() -> Path:
         "ADB não encontrado. Instale o Android Platform Tools ou coloque a pasta platform-tools dentro do projeto."
     )
 
-
-def adb_shell(*args: str) -> subprocess.CompletedProcess:
+def adb_run(*args: str) -> subprocess.CompletedProcess:
     adb = encontrar_adb()
 
     return subprocess.run(
-        [str(adb), "shell", *args],
+        [str(adb), *args],
         capture_output=True,
         text=True,
         check=True,
     )
+
+def adb_shell(*args: str) -> subprocess.CompletedProcess:
+    return adb_run("shell", *args)
+
+
+def diagnosticar_android() -> tuple[bool, str]:
+    try:
+        encontrar_adb()
+    except FileNotFoundError:
+        return False, "ADB não encontrado"
+
+    try:
+        resultado = adb_run("devices")
+        linhas = [linha.strip() for linha in resultado.stdout.splitlines()[1:] if linha.strip()]
+
+        dispositivo_autorizado = False
+        dispositivo_nao_autorizado = False
+        dispositivo_offline = False
+
+        for linha in linhas:
+            partes = linha.split()
+            if len(partes) < 2:
+                continue
+
+            status = partes[1]
+            if status == "device":
+                dispositivo_autorizado = True
+            elif status == "unauthorized":
+                dispositivo_nao_autorizado = True
+            elif status == "offline":
+                dispositivo_offline = True
+
+        if not dispositivo_autorizado:
+            if dispositivo_nao_autorizado:
+                return False, "Dispositivo ADB não autorizado. Aceite a autorização RSA no celular"
+
+            if dispositivo_offline:
+                return False, "Dispositivo ADB offline. Reconecte o celular"
+
+            return False, "Nenhum dispositivo ADB conectado"
+    except subprocess.CalledProcessError:
+        return False, "Falha ao listar dispositivos ADB"
+
+    try:
+        adb_shell("ls", CAMINHO_CELULAR)
+        return True, "Android conectado e caminho disponível"
+    except subprocess.CalledProcessError:
+        return False, f"Pasta Android não encontrada: {CAMINHO_CELULAR}"
 
 
 def adb_pull(origem_android: str, destino_pc: Path) -> subprocess.CompletedProcess:
-    adb = encontrar_adb()
+    return adb_run("pull", f"{origem_android}/.", str(destino_pc))
 
-    return subprocess.run(
-        [str(adb), "pull", f"{origem_android}/.", str(destino_pc)],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-
+def adb_push(origem_pc: Path, destino_android: str) -> subprocess.CompletedProcess:
+    return adb_run("push", f"{origem_pc}/.", destino_android)
 
 def celular_conectado() -> bool:
-    try:
-        adb_shell("ls", CAMINHO_CELULAR)
-        return True
-    except FileNotFoundError:
-        return False
-    except subprocess.CalledProcessError:
-        return False
+    conectado, _ = diagnosticar_android()
+    return conectado
 
 
 def tempo_celular() -> float:
     try:
-        resultado = adb_shell("stat", "-c", "%Y", CAMINHO_CELULAR)
-        return float(resultado.stdout.strip())
+        resultado = adb_shell(
+            "find",
+            CAMINHO_CELULAR,
+            "-type",
+            "f",
+            "-exec",
+            "stat",
+            "-c",
+            "%Y",
+            "{}",
+            ";",
+        )
+        timestamps = []
+
+        for linha in resultado.stdout.splitlines():
+            try:
+                timestamps.append(float(linha.strip()))
+            except ValueError:
+                continue
+
+        if not timestamps:
+            return 0
+
+        return max(timestamps)
     except FileNotFoundError:
         return 0
     except subprocess.CalledProcessError:
@@ -68,7 +127,7 @@ def tempo_celular() -> float:
 
 
 def sincronia_inicial(caminho_pc: Path) -> str:
-    from src.config import tempo_pc #noqa
+    from src.backup import tempo_pc #noqa
     if not celular_conectado():
         return "Android desconectado"
 
